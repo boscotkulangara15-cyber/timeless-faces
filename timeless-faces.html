@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeless Faces</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                  url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.95);
+      max-width: 420px;
+      width: 100%;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 { font-family: 'Playfair Display', serif; margin-bottom: 10px; }
+    p { font-size: 0.9rem; margin-bottom: 20px; color: #555; }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button { background: #111; color: #fff; border: none; cursor: pointer; transition: all 0.2s; }
+    button:hover { background: #333; transform: translateY(-2px); }
+    button:disabled { background: #888; cursor: not-allowed; }
+    .download-btn { background: #4a90e2; margin-top: 10px; }
+    .download-btn:hover { background: #357abd; }
+    .result img { width: 100%; border-radius: 15px; margin-top: 15px; }
+    .hidden { display: none; }
+    @media (max-width: 480px) {
+      .card { padding: 20px; }
+      input, select, button { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Timeless Faces</h1>
+    <p>Discover a timeless portrait</p>
+
+    <!-- User Inputs -->
+    <input type="text" id="username" placeholder="Your Name" required />
+    <select id="age">
+      <option value="">Select the Age Group</option>
+      <option value="60">60 - 65</option>
+      <option value="70">66 - 75</option>
+      <option value="80">76 - 80</option>
+    </select>
+    <input type="email" id="email" placeholder="Your Email Address" required />
+
+    <!-- Submit Button -->
+    <button id="submitBtn" onclick="generateProfile()">Submit</button>
+
+    <!-- Result Section -->
+    <div class="result hidden" id="result">
+      <h3 id="randomName"></h3>
+      <img id="portrait" alt="Generated portrait" />
+      <button class="download-btn" onclick="downloadImage()">Download Portrait</button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize EmailJS
+    const PUBLIC_KEY = 'EEYNo0gtSzn6fOG4Z';
+    const SERVICE_ID = 'service_yo64mja';
+    const TEMPLATE_ID = 'template_mtnftex';
+    emailjs.init(PUBLIC_KEY);
+
+    // Classic names array
+    const names = ['Arthur', 'Henry', 'George', 'Walter', 'Edward', 'Samuel', 'Frank', 'Albert', 'Thomas', 'Joseph'];
+
+    // Generate profile
+    function generateProfile() {
+      const userName = document.getElementById('username').value.trim();
+      const age = document.getElementById('age').value;
+      const email = document.getElementById('email').value.trim();
+      const btn = document.getElementById('submitBtn');
+
+      if (!userName || !age || !email) {
+        alert('Please fill all fields');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Generating...';
+
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      const imageUrl = `https://source.unsplash.com/400x400/?portrait&sig=${Math.floor(Math.random()*1000)}`;
+      const portraitImg = document.getElementById('portrait');
+
+      // Wait until image loads
+      portraitImg.onload = () => {
+        document.getElementById('randomName').innerText = randomName;
+        document.getElementById('result').classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerText = 'Submit';
+      };
+      portraitImg.src = imageUrl;
+
+      // Send email
+      emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+        to_email: email,
+        user_name: userName,
+        chosen_age: age,
+        random_name: randomName,
+        image_url: imageUrl
+      }).catch(err => console.log('EmailJS error:', err));
+    }
+
+    // Download portrait image
+    async function downloadImage() {
+      const img = document.getElementById('portrait');
+      const filename = `${document.getElementById('randomName').innerText.toLowerCase()}.jpg`;
+
+      try {
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (err) {
+        alert('Could not download directly. Please right-click the image to save.');
+      }
+    }
+  </script>
+</body>
+</html>
